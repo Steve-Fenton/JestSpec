@@ -8,7 +8,13 @@ The project was started by copying the specifications from TypeSpec (which I wro
 
 The idea is to use Jest to provide the test goodies, but allow Gherkin specifications to drive the tests.
 
-# Visual Studio Code experience
+## To-do list
+
+- Parse the arguments found in the text, based on the regex type (`(\d+)` should result in a number)
+- Make the parsing of specs and steps simpler
+- Make the body of the `test()` simpler
+
+## Visual Studio Code experience
 
 [Jest extension](https://marketplace.visualstudio.com/items?itemName=Orta.vscode-jest)
 
