@@ -4,17 +4,9 @@ import path from 'path';
 export class JestSpec {
     constructor() {
         // Sensible defaults
-        this.steps = ['**/*.step.js', '**/*.step.mjs'];
+        this.steps = 'src/tests/steps/';
         this.features = ['**/*.feature'];
         this.stepMap = [];
-    }
-
-    addSteps(steps) {
-        this.steps = steps;
-    }
-
-    addFeatures(features) {
-        this.features = features;
     }
 
     map(regex, func) {
@@ -26,28 +18,22 @@ export class JestSpec {
     
     getMatch(line, regex) {
         const matches = line.match(regex) ?? [];
-
         return matches.filter(m => m && m != line);
     }
-    
-    async run() {
-        // TODO: Hard coded, should loop around results from this.steps
-        const stepModule = await import('./tests/steps/calculator.steps.mjs');
+
+    addSteps(stepModule) {
         const _this = this;
         stepModule.steps((regex, func) => _this.map(regex, func));
+    }
 
-        const featurePath = path.join(process.cwd(), '/src/tests/Basic.feature')
+    async parse(feature) {
 
-        // TODO: Hard coded, should loop around results from this.features
-        const feature = fs.readFileSync(featurePath, {encoding:'utf8', flag:'r'});
         const lines = feature.replace(/\r\n/g, '\n').split('\n');
         
         let inFeature = false;
         let featureName = null;
         let inScenario = false;
         let scenarioName = null;
-        let inStep = false;
-        let stepName = null;
 
         const testMap = [];
         let testItem = null;
@@ -63,6 +49,7 @@ export class JestSpec {
             if (featureMatch && featureMatch.length > 0) {
                 inFeature = true;
                 featureName = featureMatch[0].trim();
+                console.log('Feature Found', featureName);
                 continue;
             }
 
@@ -77,6 +64,7 @@ export class JestSpec {
 
                 inScenario = true;
                 scenarioName = scenarioMatch[0].trim();
+                console.log('Scenario Found', scenarioName);
 
                 testItem = {
                     feature: featureName,
@@ -94,11 +82,9 @@ export class JestSpec {
 
                 const stepMatch = this.getMatch(line, tokens.step);
                 if (stepMatch && stepMatch.length > 0) {
-                    inStep = true;
-                    stepName = line;
 
                     this.stepMap.forEach((val) => {
-                        const regexMatch = stepName.match(val.regex);
+                        const regexMatch = line.match(val.regex);
                         if (regexMatch && regexMatch.length > 0) {
                             const args = [
                                 null
@@ -109,6 +95,7 @@ export class JestSpec {
                             }
 
                             testItem.steps.push({
+                                name: line,
                                 func: val.func,
                                 args: args
                             });
@@ -116,6 +103,10 @@ export class JestSpec {
                     });
                 }
             }
+        }
+
+        if (testItem) {
+            testMap.push(testItem);
         }
 
         return testMap;
