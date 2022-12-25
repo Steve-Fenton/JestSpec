@@ -12,6 +12,11 @@ export function steps(map) {
         return context;
     });
 
+    map(/And I asynchronously enter (\d+) into the calculator$/i, async (context, number) => {
+        await context.calculator.addAsync(number);
+        return context;
+    });
+
     map(/I press the total button$/gi, (context) => {
         context.total = context.calculator.getTotal();
         return context;

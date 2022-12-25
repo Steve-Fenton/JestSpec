@@ -12,8 +12,13 @@ const tokens = {
 }
 
 export class JestSpec {
-    constructor() {
+    /**
+     * Constructor
+     * @param {boolean} verbose 
+     */
+    constructor(verbose) {
         // Sensible defaults
+        this.verbose = verbose ?? false;
         this.steps = 'src/tests/steps/';
         this.features = ['**/*.feature'];
         this.stepMap = [];
@@ -72,7 +77,7 @@ export class JestSpec {
             if (featureMatch && featureMatch.length > 0) {
                 inFeature = true;
                 featureName = featureMatch[0].trim();
-                console.log('Feature Found', featureName);
+                this.verbose && console.log('Feature Found', featureName);
                 continue;
             }
 
@@ -87,7 +92,7 @@ export class JestSpec {
 
                 inScenario = true;
                 scenarioName = scenarioMatch[0].trim();
-                console.log('Scenario Found', scenarioName);
+                this.verbose && console.log('Scenario Found', scenarioName);
 
                 testItem = {
                     feature: featureName,
@@ -126,7 +131,7 @@ export class JestSpec {
                         }
 
                     });
-                    
+
                     if (!stepFound) {
                         const argumentParser = new ArgumentParser(line);
                         const codeBuilder = new StepMethodBuilder(argumentParser);
@@ -156,14 +161,14 @@ export class JestSpec {
         const tests = await this.parse(feature);
 
         for (const x of tests) {
-            console.log('Running Scenario', x.feature, x.scenario, x.steps.length);
+            this.verbose && console.log('Running Scenario', x.feature, x.scenario, x.steps.length);
             let context = {
                 feature: x.feature,
                 scenario: x.scenario
             };
             for (const s of x.steps) {
                 s.args[0] = context;
-                console.log('Running step', s.name);
+                this.verbose && console.log('Running step', s.name);
                 context = await s.func.apply(null, s.args);
             }
         }

@@ -7,6 +7,15 @@ export class Calculator {
         this.total += parseInt(number, 10);
     }
 
+    async addAsync(number) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                this.total += parseInt(number, 10);
+              resolve('resolved');
+            }, 10);
+          });
+    }
+
     getTotal() {
         return this.total;
     }
