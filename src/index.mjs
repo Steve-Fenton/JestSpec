@@ -104,8 +104,8 @@ export class JestSpec {
             if (inFeature && inScenario) {
 
                 const stepMatch = this.getMatch(line, tokens.step);
+                let stepFound = false;
                 if (stepMatch && stepMatch.length > 0) {
-
                     this.stepMap.forEach((val) => {
                         const regexMatch = line.match(val.regex);
                         if (regexMatch && regexMatch.length > 0) {
@@ -117,15 +117,21 @@ export class JestSpec {
                                 args.push(regexMatch[i]);
                             }
 
+                            stepFound = true;
                             testItem.steps.push({
                                 name: line,
                                 func: val.func,
                                 args: args
                             });
-                        } else {
-                            console.error('Missing step:', line);
                         }
+
                     });
+                    
+                    if (!stepFound) {
+                        const argumentParser = new ArgumentParser(line);
+                        const codeBuilder = new StepMethodBuilder(argumentParser);
+                        console.error('Missing step. Consider adding code:\n', codeBuilder.getSuggestedStepMethod());
+                    }
                 }
             }
         }
@@ -136,6 +142,8 @@ export class JestSpec {
 
         return testMap;
     }
+
+    
 
     /**
      * Runs a specification based on a relative path, i.e. /src/specifications/Feature.feature
@@ -160,4 +168,101 @@ export class JestSpec {
             }
         }
     }
+}
+
+class StepMethodBuilder {
+    constructor(argumentParser) {
+        this.argumentParser = argumentParser;
+     }
+
+    getSuggestedStepMethod() {
+        /* Template for step method */
+        const params = this.argumentParser.getParameters();
+        const comma = (params.length > 0) ? ', ' : '';
+
+        const suggestion = `    map(/${this.argumentParser.getCondition()}$/i, (context${comma}${params}) => {
+            context.calculator = new Calculator();
+            return context;
+        });`;
+
+        // const suggestion = '    @step(/^' + this.argumentParser.getCondition() + '$/i)\n' +
+        //     '    stepName(context: any' + comma + params + ') {\n' +
+        //     '        throw new Error(\'Not implemented.\');\n' +
+        //     '    }';
+
+        return suggestion;
+    }
+}
+
+class ArgumentParser {
+    /**
+     * Constructor
+     * @param {string} originalCondition 
+     */
+    constructor(originalCondition) {
+        this.arguments = [];
+        this.originalCondition = originalCondition;
+        this.condition = originalCondition;
+        this.parseArguments()
+    }
+
+    getCondition() {
+        return this.condition.trim();
+    }
+
+    getParameters() {
+        return this.arguments.join(', ');
+    }
+
+    parseArguments() {
+        const foundArguments = this.originalCondition.match(ExpressionLibrary.quotedArgumentsRegExp);
+
+        if (!foundArguments || foundArguments.length === 0) {
+            return;
+        }
+
+        for (let i = 0; i < foundArguments.length; i++) {
+            const foundArgument = foundArguments[i];
+            this.replaceArgumentWithExpression(foundArgument, i);
+        }
+    }
+
+    replaceArgumentWithExpression(quotedArgument, position) {
+        const trimmedArgument = quotedArgument.replace(/"/g, '');
+        let argumentExpression = '';
+
+        this.arguments.push('p' + position);
+        if (this.isBooleanArgument(trimmedArgument)) {
+            argumentExpression = ExpressionLibrary.trueFalseString;
+        } else if (this.isNumericArgument(trimmedArgument)) {
+            argumentExpression = ExpressionLibrary.numberString;
+        } else {
+            argumentExpression = ExpressionLibrary.defaultString;
+        }
+
+        this.condition = this.condition.replace(quotedArgument, argumentExpression);
+    }
+
+    isBooleanArgument(argument) {
+        return (argument.toLowerCase() === 'true' || argument.toLowerCase() === 'false');
+    }
+
+    isNumericArgument(argument) {
+        return (parseFloat(argument).toString() === argument);
+    }
+}
+
+const ExpressionLibrary = {
+    // RegExp members
+    quotedArgumentsRegExp: /("(?:[^"\\]|\\.)*")/ig,
+    defaultStepRegExp: /"(?:[^"\\]|\\.)*"/ig,
+                                      
+    // Part one finds things like "(.*)" and (\"\d+\") = /([\.\\]([*a-z])\+?)/g;
+    // Part two finds things like (\"true\"|\"false\") = \(\\\"true\\\"\|\\"false\\\"\)
+    regexFinderRegExp: /([\.\\]([*a-z])\+?)|\(\\\"true\\\"\|\\"false\\\"\)/g,
+
+    // String members
+    defaultString: '"(.*)"',
+    numberString: '(\\"\\d+\\")',
+    trueFalseString: '(\\"true\\"|\\"false\\")',
 }
