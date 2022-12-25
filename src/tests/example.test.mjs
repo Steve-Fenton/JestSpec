@@ -22,8 +22,6 @@ test('Multiple scenarios', async () => {
     await spec.run('/src/specifications/MultipleScenarios.feature');
 });
 
-// 
-// 
 // ExcludedByTag.feature <--  should use Jest's own feature
 // Failing.feature
 // FailingAsyncSteps.feature
