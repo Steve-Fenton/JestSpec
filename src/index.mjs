@@ -1,6 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * @typedef {{ steps(mapper: (regEx: RegExp, func: Function) => void): void }} StepModule
+ */
+
+const tokens = {
+    feature: /^\s*Feature: (.*)/i,
+    scenario: /^\s*Scenario: (.*)/i,
+    step: /^\s*Given (.*)|When (.*)|Then (.*)|And (.*)/i
+}
+
 export class JestSpec {
     constructor() {
         // Sensible defaults
@@ -9,6 +19,11 @@ export class JestSpec {
         this.stepMap = [];
     }
 
+    /**
+     * Adds a step to the step map
+     * @param {RegExp} regex 
+     * @param {Function} func 
+     */
     map(regex, func) {
         this.stepMap.push({
             regex: regex,
@@ -16,18 +31,32 @@ export class JestSpec {
         });
     }
     
+    /**
+     * Checks a string against a regular expression
+     * @param {string} line 
+     * @param {RegExp} regex 
+     * @returns string[]
+     */
     getMatch(line, regex) {
         const matches = line.match(regex) ?? [];
         return matches.filter(m => m && m != line);
     }
 
+    /**
+     * Adds step definitions
+     * @param {StepModule} stepModule 
+     */
     addSteps(stepModule) {
         const _this = this;
         stepModule.steps((regex, func) => _this.map(regex, func));
     }
 
+    /**
+     * Parses feature text
+     * @param {string} feature 
+     * @returns 
+     */
     async parse(feature) {
-
         const lines = feature.replace(/\r\n/g, '\n').split('\n');
         
         let inFeature = false;
@@ -37,12 +66,6 @@ export class JestSpec {
 
         const testMap = [];
         let testItem = null;
-
-        const tokens = {
-            feature: /^\s*Feature: (.*)/i,
-            scenario: /^\s*Scenario: (.*)/i,
-            step: /^\s*Given (.*)|When (.*)|Then (.*)|And (.*)/i
-        }
 
         for (const line of lines) {
             const featureMatch = this.getMatch(line, tokens.feature);
@@ -99,6 +122,8 @@ export class JestSpec {
                                 func: val.func,
                                 args: args
                             });
+                        } else {
+                            console.error('Missing step:', line);
                         }
                     });
                 }
@@ -110,5 +135,29 @@ export class JestSpec {
         }
 
         return testMap;
+    }
+
+    /**
+     * Runs a specification based on a relative path, i.e. /src/specifications/Feature.feature
+     * @param {string} spec 
+     */
+    async run(spec) {
+        const featurePath = path.join(process.cwd(), spec);
+        const feature = fs.readFileSync(featurePath, {encoding:'utf8', flag:'r'});
+
+        const tests = await this.parse(feature);
+
+        for (const x of tests) {
+            console.log('Running Scenario', x.feature, x.scenario, x.steps.length);
+            let context = {
+                feature: x.feature,
+                scenario: x.scenario
+            };
+            for (const s of x.steps) {
+                s.args[0] = context;
+                console.log('Running step', s.name);
+                context = await s.func.apply(null, s.args);
+            }
+        }
     }
 }
