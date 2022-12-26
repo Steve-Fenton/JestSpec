@@ -8,7 +8,7 @@ import path from 'path';
 const tokens = {
     feature: /^\s*Feature: (.*)/i,
     outline: /^\s*Scenario Outline: (.*)/i,
-    examples: /^\s*Examples:(.*)/i,
+    examples: /^\s*Examples:/i,
     scenario: /^\s*Scenario: (.*)/i,
     step: /^\s*Given (.*)|When (.*)|Then (.*)|And (.*)/i
 }
@@ -46,7 +46,7 @@ export class JestSpec {
      * @returns string[]
      */
     getMatch(line, regex) {
-        const matches = line.match(regex) ?? [];
+        const matches = regex.exec(line) ?? [];
         return matches.filter(m => m && m != line);
     }
 
@@ -71,6 +71,7 @@ export class JestSpec {
         let featureName = null;
 
         let inOutline = false;
+        let inExample = false;
 
         let inScenario = false;
         let scenarioName = null;
@@ -88,7 +89,9 @@ export class JestSpec {
             }
 
             const scenarioMatch = this.getMatch(line, tokens.scenario);
-            if (scenarioMatch && scenarioMatch.length > 0) {
+            const outlineMatch = this.getMatch(line, tokens.outline);
+            if (scenarioMatch && scenarioMatch.length > 0
+                || outlineMatch && outlineMatch.length > 0) {
                 if (inScenario) {
                     // Switching to a new scenario now
                     if (testItem) {
@@ -96,17 +99,17 @@ export class JestSpec {
                     }
                 }
 
+                inExample = false;
                 inScenario = true;
-                scenarioName = scenarioMatch[0].trim();
-                this.verbose && console.log('Scenario Found', scenarioName);
-
-                const outlineMatch = this.getMatch(line, tokens.outline);
+                scenarioName = (scenarioMatch[0] ?? outlineMatch[0]).trim();
                 inOutline = (outlineMatch && outlineMatch.length > 0);
+                this.verbose && console.log('Scenario Found', scenarioName);
 
                 testItem = {
                     feature: featureName,
                     scenario: scenarioName,
-                    steps: []
+                    steps: [],
+                    examples: []
                 };
 
                 if (!inFeature) {
@@ -115,7 +118,13 @@ export class JestSpec {
                 continue;
             }
 
-            if (inFeature && inScenario) {
+            const exampleMatch = tokens.examples.exec(line);
+            if (exampleMatch && exampleMatch.length > 0) {
+                inExample = true;
+                continue;
+            }
+
+            if (inFeature && inScenario && !inExample) {
 
                 let stepFound = false;
                 const stepMatch = this.getMatch(line, tokens.step);
@@ -136,10 +145,9 @@ export class JestSpec {
 
                             stepFound = true;
                             testItem.steps.push({
-                                name: line,
+                                name: line.trim(),
                                 func: val.func,
-                                args: argumentParser.getArgs(line, val.regex, args),
-                                examples: []
+                                args: argumentParser.getArgs(line, val.regex, args)
                             });
                         }
                     });
@@ -150,6 +158,11 @@ export class JestSpec {
                         console.error('Missing step. Consider adding code:\n', codeBuilder.getSuggestedStepMethod());
                     }
                 }
+            }
+
+            if (inExample) {
+                const examples = line.trim().split('|').filter(s => !!s).map(s => s.trim());
+                testItem.examples.push(examples);
             }
         }
 

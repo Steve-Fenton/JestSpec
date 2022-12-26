@@ -30,7 +30,7 @@ test('Quoted strings', async () => {
     await spec.run('/src/specifications/QuotedStrings.feature');
 });
 
-test('Scenario outlines', async () => {
+test.only('Scenario outlines', async () => {
     await spec.run('/src/specifications/ScenarioOutlines.feature');
 });
 
