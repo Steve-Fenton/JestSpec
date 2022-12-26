@@ -23,13 +23,15 @@ test('Multiple scenarios', async () => {
 });
 
 // ExcludedByTag.feature <--  should use Jest's own feature
-// Failing.feature
-// FailingAsyncSteps.feature
 // MixedSpecificationFIles.feature
 // MultipleArgumentsPerLine.feature
 // QuotedStrings.feature
 // ScenarioOutlines.feature
 // UnquotedExpressions.feature
+
+test.skip('Failing test', async() => {
+    await spec.run('/src/specifications/Failing.feature');
+});
 
 test.skip('Missing step test', async() => {
     await spec.run('/src/specifications/MissingStep.feature');

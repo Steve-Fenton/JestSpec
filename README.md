@@ -87,11 +87,32 @@ test('Async steps', async () => {
 });
 ```
 
-## To-do list
+## Using other test frameworks
 
-- Parse the arguments found in the text, based on the regex type (`(\d+)` should result in a number)
-- Make the parsing of specs and steps simpler
-- Make the body of the `test()` simpler
+JestSpec works with most JavaScript test frameworks.
+
+The example is based on running specifications within Jest, but in practice you can use other test frameworks to wrap your specifications. Just use the appropriate assertions in your step files and whatever code you write tests in in your test file.
+
+## Missing steps
+
+JestSpec will warn you if you have a missing step and supplies a code snippet to get you started:
+
+```
+  console.error
+    Missing step. Consider adding code:
+         map(/Then the result should be (\"\d+\") on the screen$/i, (context, p0) => {
+                context.calculator = new Calculator();
+                return context;
+            });
+```
+
+The step code will contain regular expressions for any quoted variables, but if you aren't quoting variables, you can replace hard-coded values with:
+
+- String: `(.*)`
+- Number: `(\d+)`
+- Boolean: `(true|false)`
+
+We recommend you quote string variables, as the matching can be too general with no quotes. You might choose to quote all your variables, as the auto-generated steps will then be ready to use!
 
 ## Visual Studio Code experience
 

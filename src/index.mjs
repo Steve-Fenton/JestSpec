@@ -22,6 +22,7 @@ export class JestSpec {
         this.steps = 'src/tests/steps/';
         this.features = ['**/*.feature'];
         this.stepMap = [];
+        this.missingSteps = 0;
     }
 
     /**
@@ -138,6 +139,7 @@ export class JestSpec {
                     });
 
                     if (!stepFound) {
+                        this.missingSteps++;
                         const codeBuilder = new StepMethodBuilder(argumentParser);
                         console.error('Missing step. Consider adding code:\n', codeBuilder.getSuggestedStepMethod());
                     }
@@ -161,6 +163,10 @@ export class JestSpec {
         const feature = fs.readFileSync(featurePath, {encoding:'utf8', flag:'r'});
 
         const tests = await this.parse(feature);
+
+        if (this.missingSteps > 0) {
+            throw new Error(`${this.missingSteps} missing steps`);
+        }
 
         for (const x of tests) {
             this.verbose && console.log('Running Scenario', x.feature, x.scenario, x.steps.length);
