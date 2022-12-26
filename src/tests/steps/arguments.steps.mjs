@@ -12,7 +12,7 @@ export function steps(map) {
         return context;
     });
 
-    map(/I pass (\"true\"|\"false\") and (\"true\"|\"false\") as arguments$/gi, (context) => {
+    map(/I pass (\"true\"|\"false\") and (\"true\"|\"false\") as arguments$/gi, (context, arg1, arg2) => {
         context.firstArg = arg1;
         context.secondArg = arg2;
         return context;

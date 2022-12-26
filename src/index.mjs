@@ -108,11 +108,15 @@ export class JestSpec {
 
             if (inFeature && inScenario) {
 
-                const stepMatch = this.getMatch(line, tokens.step);
                 let stepFound = false;
+                const stepMatch = this.getMatch(line, tokens.step);
                 if (stepMatch && stepMatch.length > 0) {
+                    
+                    const argumentParser = new ArgumentParser(line);
+
                     this.stepMap.forEach((val) => {
-                        const regexMatch = line.match(val.regex);
+                        //const regexMatch = line.match(val.regex);
+                        const regexMatch = val.regex.exec(line);
                         if (regexMatch && regexMatch.length > 0) {
                             const args = [
                                 null
@@ -122,18 +126,18 @@ export class JestSpec {
                                 args.push(regexMatch[i]);
                             }
 
+                            let m = val.regex.exec(line);
+
                             stepFound = true;
                             testItem.steps.push({
                                 name: line,
                                 func: val.func,
-                                args: args
+                                args: argumentParser.getArgs(line, val.regex, args)
                             });
                         }
-
                     });
 
                     if (!stepFound) {
-                        const argumentParser = new ArgumentParser(line);
                         const codeBuilder = new StepMethodBuilder(argumentParser);
                         console.error('Missing step. Consider adding code:\n', codeBuilder.getSuggestedStepMethod());
                     }
@@ -147,8 +151,6 @@ export class JestSpec {
 
         return testMap;
     }
-
-    
 
     /**
      * Runs a specification based on a relative path, i.e. /src/specifications/Feature.feature
@@ -189,11 +191,6 @@ class StepMethodBuilder {
             context.calculator = new Calculator();
             return context;
         });`;
-
-        // const suggestion = '    @step(/^' + this.argumentParser.getCondition() + '$/i)\n' +
-        //     '    stepName(context: any' + comma + params + ') {\n' +
-        //     '        throw new Error(\'Not implemented.\');\n' +
-        //     '    }';
 
         return suggestion;
     }
@@ -255,6 +252,43 @@ class ArgumentParser {
     isNumericArgument(argument) {
         return (parseFloat(argument).toString() === argument);
     }
+
+    /**
+     * Gets typed parameters from an input step
+     * @param {string} text 
+     * @param {RegExp} findExpression 
+     * @returns 
+     */
+    getArgs(text, findExpression, args) {
+        const typeIndicators = findExpression.source.toString().match(ExpressionLibrary.regexFinderRegExp) || [];
+
+        if (!args) {
+            return [null];
+        }
+
+        let result = [null];
+        for (let i = 1; i < args.length; i++) {
+            let match = args[i];
+            match = match.replace(/^"(.+(?="$))"$/, '$1');
+            match = match.replace(/^'(.+(?='$))'$/, '$1');
+
+            const paramIndex = i;
+            const indicator = typeIndicators[i - 1] || '';
+
+            switch (indicator) {
+                case "\\d+":
+                    result[paramIndex] = parseFloat(match);
+                    break;
+                case "(\\\"true\\\"|\\\"false\\\")":
+                    result[paramIndex] = (match.toLowerCase() === 'true');
+                    break;
+                default:
+                    result[paramIndex] = match;
+            }
+        }
+
+        return result;
+    }
 }
 
 const ExpressionLibrary = {
@@ -264,7 +298,7 @@ const ExpressionLibrary = {
                                       
     // Part one finds things like "(.*)" and (\"\d+\") = /([\.\\]([*a-z])\+?)/g;
     // Part two finds things like (\"true\"|\"false\") = \(\\\"true\\\"\|\\"false\\\"\)
-    regexFinderRegExp: /([\.\\]([*a-z])\+?)|\(\\\"true\\\"\|\\"false\\\"\)/g,
+    regexFinderRegExp: /([\.\\]([*a-z])\+?)|\(\\\"true\\\"\|\\\"false\\\"\)/g,
 
     // String members
     defaultString: '"(.*)"',
