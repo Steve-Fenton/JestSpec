@@ -3,7 +3,6 @@
     As a BDD enthusiast
     I want to use scenario outlines with tables of examples
 
-@passing
 Scenario Outline: Basic Example with Calculator
     Given I am using a calculator
     And I enter <Number 1> into the calculator

@@ -7,7 +7,7 @@ import path from 'path';
 
 const tokens = {
     feature: /^\s*Feature: (.*)/i,
-    scenario: /^\s*Scenario Outline: (.*)/i,
+    outline: /^\s*Scenario Outline: (.*)/i,
     examples: /^\s*Examples:(.*)/i,
     scenario: /^\s*Scenario: (.*)/i,
     step: /^\s*Given (.*)|When (.*)|Then (.*)|And (.*)/i
@@ -100,6 +100,9 @@ export class JestSpec {
                 scenarioName = scenarioMatch[0].trim();
                 this.verbose && console.log('Scenario Found', scenarioName);
 
+                const outlineMatch = this.getMatch(line, tokens.outline);
+                inOutline = (outlineMatch && outlineMatch.length > 0);
+
                 testItem = {
                     feature: featureName,
                     scenario: scenarioName,
@@ -121,7 +124,6 @@ export class JestSpec {
                     const argumentParser = new ArgumentParser(line);
 
                     this.stepMap.forEach((val) => {
-                        //const regexMatch = line.match(val.regex);
                         const regexMatch = val.regex.exec(line);
                         if (regexMatch && regexMatch.length > 0) {
                             const args = [
@@ -132,13 +134,12 @@ export class JestSpec {
                                 args.push(regexMatch[i]);
                             }
 
-                            let m = val.regex.exec(line);
-
                             stepFound = true;
                             testItem.steps.push({
                                 name: line,
                                 func: val.func,
-                                args: argumentParser.getArgs(line, val.regex, args)
+                                args: argumentParser.getArgs(line, val.regex, args),
+                                examples: []
                             });
                         }
                     });

@@ -3,7 +3,6 @@
     As a BDD enthusiast
     I want to be told when a condition fails
 
-@failing
 Scenario: ! Failing Test Example
     Given I am using a calculator
     And I enter 15 into the calculator

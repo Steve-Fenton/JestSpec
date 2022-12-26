@@ -3,7 +3,6 @@
     As a BDD enthusiast
     I want to be able to include quotes in my arguments
 
-@passing
 Scenario: Basic Example with Calculator
     Given I am using a calculator
     And I speak "The Number \"50\"" into the calculator
