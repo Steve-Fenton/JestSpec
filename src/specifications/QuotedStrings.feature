@@ -9,4 +9,4 @@ Scenario: Basic Example with Calculator
     And I speak "The Number \"50\"" into the calculator
     And I speak "Add \"70\"" into the calculator
     When I press the total button
-    Then the result should be "120" on the screen
+    Then the result should be 120 on the screen

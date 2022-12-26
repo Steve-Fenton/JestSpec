@@ -18,16 +18,23 @@ test('Basic features', async () => {
     await spec.run('/src/specifications/Basic.feature');
 });
 
+test('Multiple arguments per line', async () => {
+    await spec.run('/src/specifications/MultipleArgumentsPerLine.feature');
+});
+
 test('Multiple scenarios', async () => {
     await spec.run('/src/specifications/MultipleScenarios.feature');
 });
 
-// ExcludedByTag.feature <--  should use Jest's own feature
-// MixedSpecificationFIles.feature
-// MultipleArgumentsPerLine.feature
-// QuotedStrings.feature
-// ScenarioOutlines.feature
-// UnquotedExpressions.feature
+test('Quoted strings', async () => {
+    await spec.run('/src/specifications/QuotedStrings.feature');
+});
+
+test('Scenario outlines', async () => {
+    await spec.run('/src/specifications/ScenarioOutlines.feature');
+});
+
+// MixedSpecificationFiles.feature
 
 test.skip('Failing test', async() => {
     await spec.run('/src/specifications/Failing.feature');

@@ -12,6 +12,19 @@ export function steps(map) {
         return context;
     });
 
+    map(/And I enter (\d+) and (\d+) into the calculator$/i, (context, num1, num2) => {
+        context.calculator.add(num1);
+        context.calculator.add(num2);
+        return context;
+    });
+
+    map(/And I speak "(.*)" into the calculator$/i, (context, sentence) => {
+        const matches = sentence.match(/(\+|-)?((\d+(\.\d+)?)|(\.\d+))/) || ['0'];
+        const num = parseFloat(matches[0]);
+        context.calculator.add(num);
+        return context;
+    });
+
     map(/And I asynchronously enter (\d+) into the calculator$/i, async (context, number) => {
         await context.calculator.addAsync(number);
         return context;
@@ -23,8 +36,6 @@ export function steps(map) {
     });
 
     map(/the result should be (\d+) on the screen$/i, (context, expected) => {
-        expected = parseInt(expected, 10);
-
         expect(context.total).toBe(expected);
         return context;
     });

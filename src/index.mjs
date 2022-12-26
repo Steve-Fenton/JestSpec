@@ -7,6 +7,8 @@ import path from 'path';
 
 const tokens = {
     feature: /^\s*Feature: (.*)/i,
+    scenario: /^\s*Scenario Outline: (.*)/i,
+    examples: /^\s*Examples:(.*)/i,
     scenario: /^\s*Scenario: (.*)/i,
     step: /^\s*Given (.*)|When (.*)|Then (.*)|And (.*)/i
 }
@@ -67,6 +69,9 @@ export class JestSpec {
         
         let inFeature = false;
         let featureName = null;
+
+        let inOutline = false;
+
         let inScenario = false;
         let scenarioName = null;
 
@@ -194,7 +199,8 @@ class StepMethodBuilder {
         const comma = (params.length > 0) ? ', ' : '';
 
         const suggestion = `    map(/${this.argumentParser.getCondition()}$/i, (context${comma}${params}) => {
-            context.calculator = new Calculator();
+            // Write your step code here
+            throw new Error('Step not yet implemented');
             return context;
         });`;
 
