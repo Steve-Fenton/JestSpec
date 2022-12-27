@@ -30,7 +30,8 @@ test('Quoted strings', async () => {
     await spec.run('/src/specifications/QuotedStrings.feature');
 });
 
-test.only('Scenario outlines', async () => {
+// TODO: Outline / example tables
+test.skip('Scenario outlines', async () => {
     await spec.run('/src/specifications/ScenarioOutlines.feature');
 });
 
