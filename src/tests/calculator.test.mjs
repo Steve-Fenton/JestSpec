@@ -1,47 +1,33 @@
 import { JestSpec } from '../index.mjs';
 import * as CalculatorSteps from './steps/calculator.steps.mjs';
-import * as ArgumentSteps from './steps/arguments.steps.mjs';
 
 const spec = new JestSpec(); // Add JestSpec("true") for verbose logging
 spec.addSteps(CalculatorSteps);
-spec.addSteps(ArgumentSteps);
 
-test('Async steps', async () => {
+test('Async steps should work', async () => {
     await spec.run('/src/specifications/AsyncSteps.feature');
 });
 
-test('Argument steps', async () => {
-    await spec.run('/src/specifications/ArgumentTypes.feature');
-});
-
-test('Basic features', async () => {
+test('A basic specification', async () => {
     await spec.run('/src/specifications/Basic.feature');
 });
 
-test('Multiple arguments per line', async () => {
+test('A specifications with steps that contain multiple arguments', async () => {
     await spec.run('/src/specifications/MultipleArgumentsPerLine.feature');
 });
 
-test('Multiple scenarios', async () => {
+test('A specification containing multiple scenarios', async () => {
     await spec.run('/src/specifications/MultipleScenarios.feature');
 });
 
-test('Quoted strings', async () => {
+test('A specification with arguments enclosed in quotes', async () => {
     await spec.run('/src/specifications/QuotedStrings.feature');
 });
 
-test('Scenario outlines', async () => {
+test('A specification containing a scenario outline and table of examples', async () => {
     await spec.run('/src/specifications/ScenarioOutlines.feature');
 });
 
-test('Basic features', async () => {
+test('A specification with multiple scenarios of different types', async () => {
     await spec.run('/src/specifications/MixedSpecificationFiles.feature');
-});
-
-test.skip('Failing test', async() => {
-    await spec.run('/src/specifications/Failing.feature');
-});
-
-test.skip('Missing step test', async() => {
-    await spec.run('/src/specifications/MissingStep.feature');
 });

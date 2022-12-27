@@ -224,10 +224,6 @@ class ArgumentParser {
     getArgs(findExpression, args) {
         const typeIndicators = findExpression.source.toString().match(ExpressionLibrary.regexFinderRegExp) || [];
 
-        if (!args) {
-            return [null];
-        }
-
         let result = [null];
         for (let i = 1; i < args.length; i++) {
             let match = args[i];
