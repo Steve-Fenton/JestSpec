@@ -30,12 +30,13 @@ test('Quoted strings', async () => {
     await spec.run('/src/specifications/QuotedStrings.feature');
 });
 
-// TODO: Outline / example tables
-test.skip('Scenario outlines', async () => {
+test('Scenario outlines', async () => {
     await spec.run('/src/specifications/ScenarioOutlines.feature');
 });
 
-// MixedSpecificationFiles.feature
+test('Basic features', async () => {
+    await spec.run('/src/specifications/MixedSpecificationFiles.feature');
+});
 
 test.skip('Failing test', async() => {
     await spec.run('/src/specifications/Failing.feature');

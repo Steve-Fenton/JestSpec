@@ -19,7 +19,7 @@ export function steps(map) {
     });
 
     map(/And I speak "(.*)" into the calculator$/i, (context, sentence) => {
-        const matches = sentence.match(/(\+|-)?((\d+(\.\d+)?)|(\.\d+))/) || ['0'];
+        const matches = sentence.match(/(\+|-)?((\d+(\.\d+)?)|(\.\d+))/);
         const num = parseFloat(matches[0]);
         context.calculator.add(num);
         return context;

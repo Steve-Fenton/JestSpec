@@ -12,6 +12,7 @@ Scenario Outline: Basic Example with Calculator
 
 Examples:
     | Number 1 | Number 2 | Total |
+    |----------|----------|-------|
     | 1        | 1        | 2     |
     | 1        | 2        | 3     |
     | 2        | 3        | 5     |

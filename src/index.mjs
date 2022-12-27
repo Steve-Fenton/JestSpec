@@ -1,10 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { SpecParser } from './spec-parser.mjs';
 
 /**
  * @typedef {{ steps(mapper: (regEx: RegExp, func: Function) => void): void }} StepModule
- * @typedef {{ name: string; steps: string[]; line: number; }} Scenario
- * @typedef {{ lines: string[]; feature: string; scenarios: Scenario[]; }} Summary
  */
 
 const tokens = {
@@ -23,8 +22,6 @@ export class JestSpec {
     constructor(verbose) {
         // Sensible defaults
         this.verbose = verbose ?? false;
-        this.steps = 'src/tests/steps/';
-        this.features = ['**/*.feature'];
         this.stepMap = [];
         this.missingSteps = 0;
     }
@@ -40,20 +37,9 @@ export class JestSpec {
             func: func
         });
     }
-    
-    /**
-     * Checks a string against a regular expression
-     * @param {string} line 
-     * @param {RegExp} regex 
-     * @returns string[]
-     */
-    getMatch(line, regex) {
-        const matches = regex.exec(line) ?? [];
-        return matches.filter(m => m && m != line);
-    }
 
     /**
-     * Adds step definitions
+     * Adds step definitions from the supplied module
      * @param {StepModule} stepModule 
      */
     addSteps(stepModule) {
@@ -61,253 +47,64 @@ export class JestSpec {
         stepModule.steps((regex, func) => _this.map(regex, func));
     }
 
-    getLines(feature) {
-        return feature.replace(/\r\n/g, '\n').split('\n');
-    }
-
-    /**
-     * Creates the initial summary of a feature
-     * @param {string} feature 
-     * @returns {Summary}
-     */
-    getSummary(feature) {
-        const lines = this.getLines(feature);
-
-        const summary = {
-            lines: lines,
-            feature: '',
-            scenarios: []
-        };
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-
-            const featureMatch = this.getMatch(line, tokens.feature);
-
-            if (featureMatch && featureMatch.length > 0) {
-                summary.feature = featureMatch[0].trim();
-                continue;
-            }
-
-            const scenarioMatch = this.getMatch(line, tokens.scenario);
-            const outlineMatch = this.getMatch(line, tokens.outline);
-
-            if (scenarioMatch && scenarioMatch.length > 0 || outlineMatch && outlineMatch.length > 0) {
-                summary.scenarios.push({
-                    name: (scenarioMatch[0] ?? outlineMatch[0]).trim(),
-                    line: i,
-                    steps: []
-                }); 
-            }
-        }
-
-        return summary;
-    }
-
-    /**
-     * Assigns steps to scenarios
-     * @param {Summary} summary 
-     * @returns {Summary}
-     */
-    assignSteps(summary) {
-        for (let i = 0; i < summary.scenarios.length; i++) {
-            const scenario = summary.scenarios[i];
-            const nextScenario = summary.scenarios[i + 1] ?? { line: summary.lines.length };
-
-            const start = scenario.line + 1;
-            const end = nextScenario.line - 1;
-
-            for (let l = start; l <= end; l++) {
-                // This just removes leading and trailing white space
-                const trimmedLine = summary.lines[l].trim();
-                // This finds table separator rows, i.e. |-----|-----|-----|, so they can be removed
-                const superTimmedLine = trimmedLine.replace(/\|/g, '').replace(/-/g, '');
-
-                if (trimmedLine && superTimmedLine) {
-                    // Only add lines with content
-                    summary.scenarios[i].steps.push(trimmedLine);
-                }
-            }
-        }
-        
-        return summary;
-    }
-
-    /**
-     * Extracts examples into multiple scenarios
-     * @param {Summary} summary 
-     * @returns {Summary}
-     */
-    extractExamples(summary) {
-        const newScenarios = [];
-
-        for (let i = 0; i < summary.scenarios.length; i++) {
-            const scenario = summary.scenarios[i];
-            let stepEnd = 0;
-            let exampleHeader = 0;
-            let exampleRowStart = 0;
-
-            // Find where examples start
-            for (let j = 0; j < scenario.steps.length; j++) {
-                const exampleMatch = tokens.examples.exec(scenario.steps[j]);
-                if (exampleMatch && exampleMatch.length > 0) {
-                    stepEnd = j;
-                    exampleHeader = j + 1;
-                    exampleRowStart = j + 2;
-                    break;
-                }
-            }
-
-            // Process examples
-            if (exampleHeader > 0) {
-                
-                const steps = scenario.steps.slice(0, stepEnd);
-                const headers = scenario.steps[exampleHeader].split('|').filter(h => !!h).map(h => `<${h.trim()}>`);
-
-                for (let j = exampleRowStart; j < scenario.steps.length; j++) {
-                    const values = scenario.steps[j].split('|').filter(v => !!v).map(v => v.trim());
-
-                    newScenarios.push({
-                        name: `${scenario.name} Example ${j - exampleHeader} ${JSON.stringify(values)}`,
-                        line: 0,
-                        steps: steps.map(s => {
-                            for (let k = 0; k < headers.length; k++) {
-                                s = s.replace(headers[k], values[k]);
-                            }
-
-                            return s;
-                        })
-                    });
-                }
-    
-                // remove the template step, add the new scenarios
-                summary.scenarios[i] = null;
-            }
-        }
-
-        // Remove the null scenarios (they were templates)
-        summary.scenarios = summary.scenarios.filter(s => !!s);
-
-        // Add the scenarios generated from templates
-        for (const ns of newScenarios) {
-            summary.scenarios.push(ns);
-        }
-
-        return summary;
-    }
-
     /**
      * Parses feature text
-     * @param {string} feature 
+     * @param {string} text 
      * @returns 
      */
-    async parse(feature) {
-        const lines = this.getLines(feature);
-
-        //const summary = this.getSummary(feature);
-        
-        let inFeature = false;
-        let featureName = null;
-
-        let inOutline = false;
-        let inExample = false;
-
-        let inScenario = false;
-        let scenarioName = null;
-
+    async parse(text) {
         const testMap = [];
-        let testItem = null;
 
-        for (const line of lines) {
-            const featureMatch = this.getMatch(line, tokens.feature);
-            if (featureMatch && featureMatch.length > 0) {
-                inFeature = true;
-                featureName = featureMatch[0].trim();
-                this.verbose && console.log('Feature Found', featureName);
-                continue;
-            }
+        const parser = new SpecParser();
+        const feature = parser.parse(text);
 
-            const scenarioMatch = this.getMatch(line, tokens.scenario);
-            const outlineMatch = this.getMatch(line, tokens.outline);
-            if (scenarioMatch && scenarioMatch.length > 0
-                || outlineMatch && outlineMatch.length > 0) {
-                if (inScenario) {
-                    // Switching to a new scenario now
-                    if (testItem) {
-                        testMap.push(testItem);
-                    }
-                }
+        this.verbose && console.log('Structured feature', feature);
 
-                inExample = false;
-                inScenario = true;
-                scenarioName = (scenarioMatch[0] ?? outlineMatch[0]).trim();
-                inOutline = (outlineMatch && outlineMatch.length > 0);
-                this.verbose && console.log('Scenario Found', scenarioName);
+        for (const scenario of feature.scenarios) {
+            
+            const testItem = {
+                feature: feature.name,
+                scenario: scenario.name,
+                steps: []
+            };
 
-                testItem = {
-                    feature: featureName,
-                    scenario: scenarioName,
-                    steps: [],
-                    examples: []
-                };
-
-                if (!inFeature) {
-                    console.warn(`"${line}" is not within a feature. Check your file has a "Feature:".`)
-                }
-                continue;
-            }
-
-            const exampleMatch = tokens.examples.exec(line);
-            if (exampleMatch && exampleMatch.length > 0) {
-                inExample = true;
-                continue;
-            }
-
-            if (inFeature && inScenario && !inExample) {
+            for (const step of scenario.steps) {
 
                 let stepFound = false;
-                const stepMatch = this.getMatch(line, tokens.step);
-                if (stepMatch && stepMatch.length > 0) {
-                    
-                    const argumentParser = new ArgumentParser(line);
 
-                    this.stepMap.forEach((val) => {
-                        const regexMatch = val.regex.exec(line);
-                        if (regexMatch && regexMatch.length > 0) {
-                            const args = [
-                                null
-                            ];
+                const argumentParser = new ArgumentParser(step);
 
-                            for (let i = 1; i < regexMatch.length; i++) {
-                                args.push(regexMatch[i]);
-                            }
+                this.stepMap.forEach((val) => {
+                    const regexMatch = val.regex.exec(step);
+                    if (regexMatch && regexMatch.length > 0) {
+                        const args = [
+                            null
+                        ];
 
-                            stepFound = true;
-                            testItem.steps.push({
-                                name: line.trim(),
-                                func: val.func,
-                                args: argumentParser.getArgs(line, val.regex, args)
-                            });
+                        for (let i = 1; i < regexMatch.length; i++) {
+                            args.push(regexMatch[i]);
                         }
-                    });
 
-                    if (!stepFound) {
-                        this.missingSteps++;
-                        const codeBuilder = new StepMethodBuilder(argumentParser);
-                        console.error('Missing step. Consider adding code:\n', codeBuilder.getSuggestedStepMethod());
+                        stepFound = true;
+                        testItem.steps.push({
+                            name: step,
+                            func: val.func,
+                            args: argumentParser.getArgs(val.regex, args)
+                        });
                     }
+                });
+
+                if (!stepFound) {
+                    this.missingSteps++;
+                    const codeBuilder = new StepMethodBuilder(argumentParser);
+                    console.error('Missing step. Consider adding code:\n', codeBuilder.getSuggestedStepMethod());
                 }
             }
 
-            if (inExample) {
-                const examples = line.trim().split('|').filter(s => !!s).map(s => s.trim());
-                testItem.examples.push(examples);
-            }
-        }
-
-        if (testItem) {
             testMap.push(testItem);
         }
+
+        this.verbose && console.log('Test map', testMap);
 
         return testMap;
     }
@@ -318,24 +115,24 @@ export class JestSpec {
      */
     async run(spec) {
         const featurePath = path.join(process.cwd(), spec);
-        const feature = fs.readFileSync(featurePath, {encoding:'utf8', flag:'r'});
+        const text = fs.readFileSync(featurePath, {encoding:'utf8', flag:'r'});
 
-        const tests = await this.parse(feature);
+        const tests = await this.parse(text);
 
         if (this.missingSteps > 0) {
             throw new Error(`${this.missingSteps} missing steps`);
         }
 
-        for (const x of tests) {
-            this.verbose && console.log('Running Scenario', x.feature, x.scenario, x.steps.length);
+        for (const test of tests) {
+            this.verbose && console.log('Running Scenario', test.feature, test.scenario, test.steps.length);
             let context = {
-                feature: x.feature,
-                scenario: x.scenario
+                feature: test.feature,
+                scenario: test.scenario
             };
-            for (const s of x.steps) {
-                s.args[0] = context;
-                this.verbose && console.log('Running step', s.name);
-                context = await s.func.apply(null, s.args);
+            for (const step of test.steps) {
+                step.args[0] = context;
+                this.verbose && console.log('Running step', step.name);
+                context = await step.func.apply(null, step.args);
             }
         }
     }
@@ -420,11 +217,11 @@ class ArgumentParser {
 
     /**
      * Gets typed parameters from an input step
-     * @param {string} text 
      * @param {RegExp} findExpression 
+     * @param {string[]} args 
      * @returns 
      */
-    getArgs(text, findExpression, args) {
+    getArgs(findExpression, args) {
         const typeIndicators = findExpression.source.toString().match(ExpressionLibrary.regexFinderRegExp) || [];
 
         if (!args) {

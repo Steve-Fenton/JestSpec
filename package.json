@@ -5,7 +5,8 @@
     "main": "index.mjs",
     "type": "module",
     "files": [
-      "src/index.mjs"
+      "src/index.mjs",
+      "src/spec-parser.mjs"
     ],
     "types": "src/index.d.mts",
     "scripts": {

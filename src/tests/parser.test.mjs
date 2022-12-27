@@ -31,7 +31,7 @@ Examples:
 
 describe('Parser', () => {
 
-    test('Expands the summary examples into scenarios', async () => {
+    test('Converts the text feature into a structured feature', () => {
         const parser = new SpecParser();
         const feature = parser.parse(sampleSpecification);
 
