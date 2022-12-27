@@ -3,16 +3,16 @@ import path from 'path';
 import { SpecParser } from './spec-parser.mjs';
 
 /**
- * @typedef {{ steps(mapper: (regEx: RegExp, func: Function) => void): void }} StepModule
+ * =============================================================================
+ * TODO
+ * Move the argument parser and other classes out
+ * General refactoring
+ * =============================================================================
  */
 
-const tokens = {
-    feature: /^\s*Feature: (.*)/i,
-    outline: /^\s*Scenario Outline: (.*)/i,
-    examples: /^\s*Examples:/i,
-    scenario: /^\s*Scenario: (.*)/i,
-    step: /^\s*Given (.*)|When (.*)|Then (.*)|And (.*)/i
-}
+/**
+ * @typedef {{ steps(mapper: (regEx: RegExp, func: Function) => void): void }} StepModule
+ */
 
 export class JestSpec {
     /**
