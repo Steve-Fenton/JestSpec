@@ -6,7 +6,9 @@
     "type": "module",
     "files": [
       "src/index.mjs",
-      "src/spec-parser.mjs"
+      "src/spec-parser.mjs",
+      "src/step-builder.mjs",
+      "src/arg-parser.mjs"
     ],
     "types": "src/index.d.mts",
     "scripts": {

@@ -1,14 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { ArgParser } from './arg-parser.mjs';
 import { SpecParser } from './spec-parser.mjs';
-
-/**
- * =============================================================================
- * TODO
- * Move the argument parser and other classes out
- * General refactoring
- * =============================================================================
- */
+import { StepBuilder } from './step-builder.mjs';
 
 /**
  * @typedef {{ steps(mapper: (regEx: RegExp, func: Function) => void): void }} StepModule
@@ -72,7 +66,7 @@ export class JestSpec {
 
                 let stepFound = false;
 
-                const argumentParser = new ArgumentParser(step);
+                const argumentParser = new ArgParser(step);
 
                 this.stepMap.forEach((val) => {
                     const regexMatch = val.regex.exec(step);
@@ -96,7 +90,7 @@ export class JestSpec {
 
                 if (!stepFound) {
                     this.missingSteps++;
-                    const codeBuilder = new StepMethodBuilder(argumentParser);
+                    const codeBuilder = new StepBuilder(argumentParser);
                     console.error('Missing step. Consider adding code:\n', codeBuilder.getSuggestedStepMethod());
                 }
             }
@@ -125,10 +119,13 @@ export class JestSpec {
 
         for (const test of tests) {
             this.verbose && console.log('Running Scenario', test.feature, test.scenario, test.steps.length);
+
+            // Context used to pass state between steps
             let context = {
                 feature: test.feature,
                 scenario: test.scenario
             };
+
             for (const step of test.steps) {
                 step.args[0] = context;
                 this.verbose && console.log('Running step', step.name);
@@ -136,130 +133,4 @@ export class JestSpec {
             }
         }
     }
-}
-
-class StepMethodBuilder {
-    constructor(argumentParser) {
-        this.argumentParser = argumentParser;
-     }
-
-    getSuggestedStepMethod() {
-        /* Template for step method */
-        const params = this.argumentParser.getParameters();
-        const comma = (params.length > 0) ? ', ' : '';
-
-        const suggestion = `    map(/${this.argumentParser.getCondition()}$/i, (context${comma}${params}) => {
-            // Write your step code here
-            throw new Error('Step not yet implemented');
-            return context;
-        });`;
-
-        return suggestion;
-    }
-}
-
-class ArgumentParser {
-    /**
-     * Constructor
-     * @param {string} originalCondition 
-     */
-    constructor(originalCondition) {
-        this.arguments = [];
-        this.originalCondition = originalCondition;
-        this.condition = originalCondition;
-        this.parseArguments()
-    }
-
-    getCondition() {
-        return this.condition.trim();
-    }
-
-    getParameters() {
-        return this.arguments.join(', ');
-    }
-
-    parseArguments() {
-        const foundArguments = this.originalCondition.match(ExpressionLibrary.quotedArgumentsRegExp);
-
-        if (!foundArguments || foundArguments.length === 0) {
-            return;
-        }
-
-        for (let i = 0; i < foundArguments.length; i++) {
-            const foundArgument = foundArguments[i];
-            this.replaceArgumentWithExpression(foundArgument, i);
-        }
-    }
-
-    replaceArgumentWithExpression(quotedArgument, position) {
-        const trimmedArgument = quotedArgument.replace(/"/g, '');
-        let argumentExpression = '';
-
-        this.arguments.push('p' + position);
-        if (this.isBooleanArgument(trimmedArgument)) {
-            argumentExpression = ExpressionLibrary.trueFalseString;
-        } else if (this.isNumericArgument(trimmedArgument)) {
-            argumentExpression = ExpressionLibrary.numberString;
-        } else {
-            argumentExpression = ExpressionLibrary.defaultString;
-        }
-
-        this.condition = this.condition.replace(quotedArgument, argumentExpression);
-    }
-
-    isBooleanArgument(argument) {
-        return (argument.toLowerCase() === 'true' || argument.toLowerCase() === 'false');
-    }
-
-    isNumericArgument(argument) {
-        return (parseFloat(argument).toString() === argument);
-    }
-
-    /**
-     * Gets typed parameters from an input step
-     * @param {RegExp} findExpression 
-     * @param {string[]} args 
-     * @returns 
-     */
-    getArgs(findExpression, args) {
-        const typeIndicators = findExpression.source.toString().match(ExpressionLibrary.regexFinderRegExp) || [];
-
-        let result = [null];
-        for (let i = 1; i < args.length; i++) {
-            let match = args[i];
-            match = match.replace(/^"(.+(?="$))"$/, '$1');
-            match = match.replace(/^'(.+(?='$))'$/, '$1');
-
-            const paramIndex = i;
-            const indicator = typeIndicators[i - 1] || '';
-
-            switch (indicator) {
-                case "\\d+":
-                    result[paramIndex] = parseFloat(match);
-                    break;
-                case "(\\\"true\\\"|\\\"false\\\")":
-                    result[paramIndex] = (match.toLowerCase() === 'true');
-                    break;
-                default:
-                    result[paramIndex] = match;
-            }
-        }
-
-        return result;
-    }
-}
-
-const ExpressionLibrary = {
-    // RegExp members
-    quotedArgumentsRegExp: /("(?:[^"\\]|\\.)*")/ig,
-    defaultStepRegExp: /"(?:[^"\\]|\\.)*"/ig,
-                                      
-    // Part one finds things like "(.*)" and (\"\d+\") = /([\.\\]([*a-z])\+?)/g;
-    // Part two finds things like (\"true\"|\"false\") = \(\\\"true\\\"\|\\"false\\\"\)
-    regexFinderRegExp: /([\.\\]([*a-z])\+?)|\(\\\"true\\\"\|\\\"false\\\"\)/g,
-
-    // String members
-    defaultString: '"(.*)"',
-    numberString: '(\\"\\d+\\")',
-    trueFalseString: '(\\"true\\"|\\"false\\")',
 }
