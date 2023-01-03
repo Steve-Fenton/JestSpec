@@ -100,7 +100,7 @@ JestSpec will warn you if you have a missing step and supplies a code snippet to
 ```
   console.error
     Missing step. Consider adding code:
-         map(/Then the result should be (\"\d+\") on the screen$/i, (context, p0) => {
+         map(/the result should be (\"\d+\") on the screen$/i, (context, p0) => {
                 context.calculator = new Calculator();
                 return context;
             });
@@ -113,6 +113,33 @@ The step code will contain regular expressions for any quoted variables, but if 
 - Boolean: `(true|false)`
 
 We recommend you quote string variables, as the matching can be too general with no quotes. You might choose to quote all your variables, as the auto-generated steps will then be ready to use!
+
+## Scenario Outlines
+
+Scenario outlines are supported. Tables are forgiving to whether you include the divider between the header and body of the table (`|---|---|---|`), the first row will be used as the header where it is left out.
+
+```gherkin
+Feature: Scenario Outline
+    In order to make features less verbose
+    As a BDD enthusiast
+    I want to use scenario outlines with tables of examples
+
+Scenario Outline: Basic Example with Calculator
+    Given I am using a calculator
+    And I enter <Number 1> into the calculator
+    And I enter <Number 2> into the calculator
+    When I press the total button
+    Then the result should be <Total> on the screen
+
+Examples:
+    | Number 1 | Number 2 | Total |
+    |----------|----------|-------|
+    | 1        | 1        | 2     |
+    | 1        | 2        | 3     |
+    | 2        | 3        | 5     |
+    | 8        | 3        | 11    |
+    | 9        | 8        | 17    |
+```
 
 ## Visual Studio Code experience
 
