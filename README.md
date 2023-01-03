@@ -76,7 +76,7 @@ export function steps(map) {
 The Jest test in a file such as `calculator.test.mjs`
 
 ```javascript
-import { JestSpec } from '../index.mjs';
+import { JestSpec } from 'jest-spec';
 import * as CalculatorSteps from './steps/calculator.steps.mjs';
 
 const spec = new JestSpec();
@@ -91,7 +91,7 @@ test('Async steps', async () => {
 
 JestSpec works with most JavaScript test frameworks.
 
-The example is based on running specifications within Jest, but in practice you can use other test frameworks to wrap your specifications. Just use the appropriate assertions in your step files and whatever code you write tests in in your test file.
+The example is based on running specifications within Jest, but in practice, you can use other test frameworks to wrap your specifications. Just use the appropriate assertions in your step files and the relevant test code to wrap the `await spec.run` call.
 
 ## Missing steps
 

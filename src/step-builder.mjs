@@ -8,7 +8,7 @@ export class StepBuilder {
         const params = this.argumentParser.getParameters();
         const comma = (params.length > 0) ? ', ' : '';
 
-        const suggestion = `    map(/${this.argumentParser.getCondition()}$/i, (context${comma}${params}) => {
+        const suggestion = `    map(/${this.argumentParser.getConditionWithoutKeyword()}$/i, (context${comma}${params}) => {
             // Write your step code here
             throw new Error('Step not yet implemented');
             return context;

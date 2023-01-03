@@ -1,4 +1,4 @@
-import { JestSpec } from '../index.mjs';
+import { JestSpec } from '../../index.mjs';
 import * as ArgumentSteps from './steps/arguments.steps.mjs';
 
 const spec = new JestSpec();

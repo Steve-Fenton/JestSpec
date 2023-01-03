@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { ArgParser } from './arg-parser.mjs';
-import { SpecParser } from './spec-parser.mjs';
-import { StepBuilder } from './step-builder.mjs';
+import { ArgParser } from './src/arg-parser.mjs';
+import { SpecParser } from './src/spec-parser.mjs';
+import { StepBuilder } from './src/step-builder.mjs';
 
 /**
  * @typedef {{ steps(mapper: (regEx: RegExp, func: Function) => void): void }} StepModule

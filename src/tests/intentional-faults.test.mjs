@@ -1,4 +1,4 @@
-import { JestSpec } from '../index.mjs';
+import { JestSpec } from '../../index.mjs';
 import * as CalculatorSteps from './steps/calculator.steps.mjs';
 
 const spec = new JestSpec(); // Add JestSpec("true") for verbose logging

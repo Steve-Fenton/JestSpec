@@ -1,3 +1,5 @@
+import { get } from "http";
+
 const ExpressionLibrary = {
     // RegExp members
     quotedArgumentsRegExp: /("(?:[^"\\]|\\.)*")/ig,
@@ -26,6 +28,12 @@ export class ArgParser {
 
     getCondition() {
         return this.condition.trim();
+    }
+
+    getConditionWithoutKeyword() {
+        const text = this.getCondition();
+        const space = text.indexOf(' ') + 1;
+        return text.substring(space);
     }
 
     getParameters() {

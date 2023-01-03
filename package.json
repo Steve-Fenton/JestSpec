@@ -1,14 +1,13 @@
 {
     "name": "jest-spec",
-    "version": "0.0.1",
+    "version": "0.0.3",
     "description": "Gherkin / Cucumber style feature definitions for Jest tests.",
     "main": "index.mjs",
     "type": "module",
     "files": [
-      "src/index.mjs",
-      "src/spec-parser.mjs",
-      "src/step-builder.mjs",
-      "src/arg-parser.mjs"
+      "index.mjs",
+      "index.d.mts",
+      "src/**.*"
     ],
     "types": "src/index.d.mts",
     "scripts": {
