@@ -1,5 +1,3 @@
-import { get } from "http";
-
 const ExpressionLibrary = {
     // RegExp members
     quotedArgumentsRegExp: /("(?:[^"\\]|\\.)*")/ig,
@@ -98,7 +96,7 @@ export class ArgParser {
             match = match.replace(/^'(.+(?='$))'$/, '$1');
 
             const paramIndex = i;
-            const indicator = typeIndicators[i - 1] || '';
+            const indicator = typeIndicators[i - 1];
 
             switch (indicator) {
                 case "\\d+":
