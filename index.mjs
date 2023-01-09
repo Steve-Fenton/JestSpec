@@ -70,6 +70,7 @@ export class JestSpec {
 
                 this.stepMap.forEach((val) => {
                     const regexMatch = val.regex.exec(step);
+
                     if (regexMatch && regexMatch.length > 0) {
                         const args = [
                             null

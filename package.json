@@ -1,6 +1,6 @@
 {
     "name": "jest-spec",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Gherkin / Cucumber style feature definitions for Jest tests.",
     "main": "index.mjs",
     "type": "module",
@@ -12,7 +12,7 @@
     "types": "src/index.d.mts",
     "scripts": {
       "types": "npx tsc index.mjs --allowJs --declaration --emitDeclarationOnly",
-      "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --collectCoverage --runInBand"
+      "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --collectCoverage"
     },
     "repository": {
       "type": "git",

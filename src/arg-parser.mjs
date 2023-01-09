@@ -32,8 +32,13 @@ export class ArgParser {
 
     getConditionWithoutKeyword() {
         const text = this.getCondition();
-        const space = text.indexOf(' ') + 1;
-        return text.substring(space);
+
+        if (text.startsWith('Given ') || text.startsWith('When ') || text.startsWith('Then ') || text.startsWith('And ')) {
+            const space = text.indexOf(' ') + 1;
+            return text.substring(space);
+        }
+
+        return text;
     }
 
     getParameters() {
