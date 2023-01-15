@@ -3,7 +3,7 @@ export type Context = {
 }
 
 export type Step = {
-    (context: context, ...args: any[]): Context;
+    (context: Context, ...args: any[]): Context;
 }
 
 export type Mapper = {
@@ -15,7 +15,7 @@ export type StepModule = {
 };
 
 export class JestSpec {
-    constructor(verbose: boolean, context: Context);
+    constructor(verbose?: boolean, context?: Context);
     map: Mapper;
     addSteps(stepModule: StepModule): void;
     parse(text: string): Promise<{

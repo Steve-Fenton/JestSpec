@@ -1,6 +1,6 @@
 {
     "name": "jest-spec",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Gherkin / Cucumber style feature definitions for Jest tests.",
     "main": "index.mjs",
     "type": "module",
