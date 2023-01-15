@@ -11,13 +11,15 @@ import { StepBuilder } from './src/step-builder.mjs';
 export class JestSpec {
     /**
      * Constructor
-     * @param {boolean} verbose 
+     * @param {boolean} [verbose]
+     * @param {any} [context]
      */
-    constructor(verbose) {
+    constructor(verbose, context) {
         // Sensible defaults
         this.verbose = verbose ?? false;
         this.stepMap = [];
         this.missingSteps = 0;
+        this.context = context;
     }
 
     /**
@@ -126,6 +128,10 @@ export class JestSpec {
                 feature: test.feature,
                 scenario: test.scenario
             };
+
+            for (key in this.context) {
+                context[key] = this.context[key];
+            }
 
             for (const step of test.steps) {
                 step.args[0] = context;
